@@ -1,0 +1,19 @@
+{
+    "name": "123dok/blog-reader-tuannp",
+    "authors": [
+        {
+            "name": "tinyporo",
+            "email": "ngophuongtuan@gmail.com"
+        }
+    ],
+    "require": {},
+    "require-dev": {
+        "phpunit/phpunit": "^7"
+    },
+    "autoload": {
+        "psr-4": {
+            "Dok123\\BlogReader\\": "src/",
+            "Dok123\\TestReader\\": "tests/"
+        }
+    }
+}
