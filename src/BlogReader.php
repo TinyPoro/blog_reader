@@ -17,12 +17,15 @@ class BlogReader
     public static function fromUrl($url){
         try{
             $adapter = new Adapter\BlogReader($url);
-        }catch (\Exception $e){dump("a");
+            $adapter->getInfo();
+        }catch (\Exception $e){
             try{
                 $adapter = new WpApiV1($url);
+                $adapter->getInfo();
             }catch (\Exception $e){
                 try{
                     $adapter = new WpApiV2($url);
+                    $adapter->getInfo();
                 }catch (\Exception $e){
                     throw new BlogNotFoundException('Not support');
                 }

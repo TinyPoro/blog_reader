@@ -15,12 +15,12 @@ use Dok123\BlogReader\Exceptions\BlogNotFoundException;
 use PHPUnit\Framework\TestCase;
 
 final class BlogReaderTest extends TestCase {
-//    public function testFromUrlBlogNotFound(){
-//        $this->expectException(BlogNotFoundException::class);
+    public function testFromUrlBlogNotFound(){
+        $this->expectException(BlogNotFoundException::class);
 
-//        BlogReader::fromUrl("abc");
-//        BlogReader::fromUrl("https://www.facebook.com/");
-//    }
+        BlogReader::fromUrl("abc");
+        BlogReader::fromUrl("https://www.facebook.com/");
+    }
 
     public function testFromUrl(){
         $this->assertInstanceOf(\Dok123\BlogReader\Adapter\BlogReader::class, BlogReader::fromUrl("http://nhilinhblog.blogspot.com/"));

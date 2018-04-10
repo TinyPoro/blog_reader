@@ -8,6 +8,8 @@
 
 namespace Dok123\BlogReader\Adapter;
 
+use Dok123\BlogReader\Entities\Item;
+use GuzzleHttp\Client;
 
 class WpApiV2 extends ReaderAbstract
 {
