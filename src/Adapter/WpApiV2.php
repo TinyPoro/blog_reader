@@ -100,7 +100,7 @@ class WpApiV2 extends ReaderAbstract
         foreach ($tags['tags'] as $tag){
             $result[] = $tag;
 
-            if(count($result) = $limit)  break;
+            if(count($result) == $limit)  break;
         }
         if(count($result) < $limit){
             $remain = $limit - $tags['found'];
