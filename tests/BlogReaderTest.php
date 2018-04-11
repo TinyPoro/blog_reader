@@ -25,7 +25,7 @@ final class BlogReaderTest extends TestCase {
     public function testFromUrl(){
         $this->assertInstanceOf(\Dok123\BlogReader\Adapter\BlogReader::class, BlogReader::fromUrl("http://nhilinhblog.blogspot.com/"));
         $this->assertInstanceOf(WpApiV1::class, BlogReader::fromUrl("en.blog.wordpress.com"));
-//        $this->assertInstanceOf(WpApiV2::class, BlogReader::fromUrl("http://shes.vn/"));
+        $this->assertInstanceOf(WpApiV2::class, BlogReader::fromUrl("http://shes.vn/"));
     }
 
     public function testBlogReader(){
@@ -35,7 +35,7 @@ final class BlogReaderTest extends TestCase {
 
         $post_array = ['kind', 'id', 'author', 'url'];
         $this->assertSame(5, count($reader->posts($post_array, null, 5)['items']));
-        $this->assertSame('http://nhilinhblog.blogspot.com/2018/03/maiakovski-o-viet-nam.html', $reader->posts($post_array)['items'][19]->url);
+        $this->assertSame('http://nhilinhblog.blogspot.com/2018/03/it-sach-moi.html', $reader->posts($post_array)['items'][19]->url);
 
         $this->assertSame(true, $reader->next());
         $this->assertSame($reader->posts()['nextPageToken'], $reader->current_page());
@@ -63,5 +63,23 @@ final class BlogReaderTest extends TestCase {
         $this->assertSame('', $reader->keyword);
 
         $this->assertSame(10, count($reader->labels(10)));
+    }
+
+    public function testWp2Reader(){
+        $reader = BlogReader::fromUrl("http://demo.wp-api.org");
+
+        $this->assertSame('WP REST API Demo', $reader->getInfo()['name']);
+
+        $post_array = ['embed'];
+        $this->assertSame(5, count($reader->posts($post_array, null, 5)));
+
+        $this->assertSame(true, $reader->next());
+        $this->assertSame(2, $reader->current_page());
+
+        $this->assertSame(1, count($reader->setKeyword('demo')));
+        $reader->resetKeyword();
+        $this->assertSame('', $reader->keyword);
+
+        $this->assertSame(6, count($reader->labels(10)));
     }
 }
