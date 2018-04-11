@@ -9,7 +9,7 @@
 namespace Dok123\BlogReader\Entities;
 
 
-class Item{
+class BlogItem{
     private $kind;
     private $id;
     private $name;

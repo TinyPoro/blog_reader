@@ -8,14 +8,16 @@
 
 namespace Dok123\BlogReader\Adapter;
 
-use Dok123\BlogReader\Entities\Item;
+use Dok123\BlogReader\Entities\BlogItem;
+use Dok123\BlogReader\Entities\WpItem;
 use GuzzleHttp\Client;
 
 class WpApiV1 extends ReaderAbstract
 {
-    const BASE_URL = 'https://www.googleapis.com/blogger/v3/blogs/byurl?url=';
+    const BASE_URL = 'https://public-api.wordpress.com/rest/v1/sites/';
 
-    protected $api_key = 'AIzaSyB4MhXuv8H2crxS_vi4AFlfi0Ndu1F0Zm8';
+    protected $api_key = '';
+    protected $cur_page = 1;
 
     public function __construct($url)
     {
@@ -32,25 +34,23 @@ class WpApiV1 extends ReaderAbstract
     }
 
     public function posts(array $fields = null, $page = null, $per_page = 20){
-        $post_url = $this->info->getPosts()->selfLink;
+        $post_url = $this->info->getMeta()->links->posts;
 
-        $url =  $post_url.'?key='.$this->api_key."&maxResults=$per_page";
+        $url =  $post_url."?number=$per_page";
+
+        if($page) {
+            $url .= "&page=$page";
+        }else $url .= "&page=$this->cur_page";
 
         if($fields) {
-            $field_string = 'kind, nextPageToken, items(';
+            $field_string = '';
 
             foreach ($fields as $key => $field){
                 if($key == count($fields)-1) $field_string .= $field;
                 else $field_string .= $field.',';
             }
 
-            $field_string .= ')';
-
             $url .= '&fields='.$field_string;
-        }
-
-        if($page) {
-            $url .= '&pageToken='.$page;
         }
 
         $postResponse = $this->makeRequest($url);
@@ -61,29 +61,26 @@ class WpApiV1 extends ReaderAbstract
     }
 
     public function next(){
-        if(!array_key_exists('nextPageToken', $this->page) || $this->page['nextPageToken'] == null) {
+        $this->cur_page++;
+        $this->posts();
+        if($this->page['found'] == 0){
+            $this->cur_page--;
             return false;
-        } else {
-//            $post_url = $this->info->getPosts()->selfLink;
-//
-//            $url = $post_url.'?key='.$this->api_key.'&pageToken='.$this->page['nextPageToken'];
-//            $this->page = $this->makeRequest($url);
-            $this->posts(null, $this->page['nextPageToken']);
-
-            return true;
         }
+
+        return true;
     }
 
     public function current_page(){
-        return $this->page['nextPageToken'];
+        return $this->cur_page;
     }
 
     public function setKeyword($keyword){
         $this->keyword = $keyword;
 
-        $post_url = $this->info->getPosts()->selfLink;
+        $post_url = $this->info->getMeta()->links->posts;
 
-        $url = $post_url.'/search?key='.$this->api_key.'&q='.$this->keyword;
+        $url = $post_url."?search=$this->keyword";
         $this->page = $this->makeRequest($url);
 
         return $this->page;
@@ -94,17 +91,25 @@ class WpApiV1 extends ReaderAbstract
     }
 
     public function labels($limit = 100){
-        $labels = [];
+        $result = [];
 
-        foreach ($this->page['items'] as $item){
-            foreach ($item->labels as $label){
-                if (count($labels) == $limit) break;
+        $tag_url = self::BASE_URL.$this->url."/tags/?number=$limit";
 
-                $labels[] = $label;
+        $tags = $this->makeRequest($tag_url);
+        foreach ($tags['tags'] as $tag){
+            $result[] = $tag;
+        }
+        if($tags['found'] < $limit){
+            $remain = $limit - $tags['found'];
+            $category_url = self::BASE_URL.$this->url."/categories/?number=$remain";
+            $categories = $this->makeRequest($category_url);
+
+            foreach ($categories['categories'] as $category){
+                $result[] = $category;
             }
         }
 
-        return $labels;
+        return $result;
     }
 
     protected function makeRequest($url){
@@ -116,11 +121,11 @@ class WpApiV1 extends ReaderAbstract
     }
 
     protected function makeGetInfoUrl(){
-        return self::BASE_URL.$this->url.'&key='.$this->api_key;
+        return self::BASE_URL.$this->url;
     }
 
     protected function setInfoData($arrayResponse){
-        $item = new Item();
+        $item = new WpItem();
 
         foreach ($arrayResponse as $key => $value){
             $function_name = 'set'.ucfirst($key);

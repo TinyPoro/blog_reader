@@ -17,6 +17,6 @@ abstract class ReaderAbstract implements ReaderInterface
 
     public $keyword;
 
-    protected $info;
+    public $info;
     protected $page;
 }

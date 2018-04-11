@@ -8,7 +8,7 @@
 
 namespace Dok123\BlogReader\Adapter;
 
-use Dok123\BlogReader\Entities\Item;
+use Dok123\BlogReader\Entities\BlogItem;
 use GuzzleHttp\Client;
 
 class WpApiV2 extends ReaderAbstract
@@ -120,7 +120,7 @@ class WpApiV2 extends ReaderAbstract
     }
 
     protected function setInfoData($arrayResponse){
-        $item = new Item();
+        $item = new BlogItem();
 
         foreach ($arrayResponse as $key => $value){
             $function_name = 'set'.ucfirst($key);

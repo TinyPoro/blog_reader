@@ -24,7 +24,7 @@ final class BlogReaderTest extends TestCase {
 
     public function testFromUrl(){
         $this->assertInstanceOf(\Dok123\BlogReader\Adapter\BlogReader::class, BlogReader::fromUrl("http://nhilinhblog.blogspot.com/"));
-//        $this->assertInstanceOf(WpApiV1::class, BlogReader::fromUrl("http://shes.vn/"));
+        $this->assertInstanceOf(WpApiV1::class, BlogReader::fromUrl("en.blog.wordpress.com"));
 //        $this->assertInstanceOf(WpApiV2::class, BlogReader::fromUrl("http://shes.vn/"));
     }
 
@@ -41,6 +41,24 @@ final class BlogReaderTest extends TestCase {
         $this->assertSame($reader->posts()['nextPageToken'], $reader->current_page());
 
         $this->assertSame(10, count($reader->setKeyword('Nguyễn Văn Vĩnh')['items']));
+        $reader->resetKeyword();
+        $this->assertSame('', $reader->keyword);
+
+        $this->assertSame(10, count($reader->labels(10)));
+    }
+
+    public function testWp1Reader(){
+        $reader = BlogReader::fromUrl("en.blog.wordpress.com");
+
+        $this->assertSame('The WordPress.com Blog', $reader->getInfo()['name']);
+
+        $post_array = ['ID'];
+        $this->assertSame(1409, $reader->posts($post_array, null, 5)['found']);
+
+        $this->assertSame(true, $reader->next());
+        $this->assertSame(2, $reader->current_page());
+
+        $this->assertSame(0, $reader->setKeyword('Nguyễn Văn Vĩnh')['found']);
         $reader->resetKeyword();
         $this->assertSame('', $reader->keyword);
 

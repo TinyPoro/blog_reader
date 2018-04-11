@@ -9,7 +9,7 @@
 namespace Dok123\BlogReader\Adapter;
 
 
-use Dok123\BlogReader\Entities\Item;
+use Dok123\BlogReader\Entities\BlogItem;
 use GuzzleHttp\Client;
 
 class BlogReader extends ReaderAbstract
@@ -122,7 +122,7 @@ class BlogReader extends ReaderAbstract
     }
 
     protected function setInfoData($arrayResponse){
-        $item = new Item();
+        $item = new BlogItem();
 
         foreach ($arrayResponse as $key => $value){
             $function_name = 'set'.ucfirst($key);
