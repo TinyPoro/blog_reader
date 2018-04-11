@@ -98,6 +98,8 @@ class WpApiV1 extends ReaderAbstract
         $tags = $this->makeRequest($tag_url);
         foreach ($tags['tags'] as $tag){
             $result[] = $tag;
+            
+            if(count($result) == $limit)  break;
         }
         if($tags['found'] < $limit){
             $remain = $limit - $tags['found'];
