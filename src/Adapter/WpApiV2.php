@@ -13,9 +13,10 @@ use GuzzleHttp\Client;
 
 class WpApiV2 extends ReaderAbstract
 {
-    const BASE_URL = 'https://www.googleapis.com/blogger/v3/blogs/byurl?url=';
+    const BASE_URL = '';
 
-    protected $api_key = 'AIzaSyB4MhXuv8H2crxS_vi4AFlfi0Ndu1F0Zm8';
+    protected $api_key = '';
+    protected $cur_page = 1;
 
     public function __construct($url)
     {
@@ -32,9 +33,9 @@ class WpApiV2 extends ReaderAbstract
     }
 
     public function posts(array $fields = null, $page = null, $per_page = 20){
-        $post_url = $this->info->getPosts()->selfLink;
+        $post_url = $this->url.'/wp-json/v2/posts';
 
-        $url =  $post_url.'?key='.$this->api_key."&maxResults=$per_page";
+        $url =  $post_url.'?key='.$this->api_key.'&per_page='.$per_page;
 
         if($fields) {
             $field_string = 'kind, nextPageToken, items(';
@@ -46,11 +47,11 @@ class WpApiV2 extends ReaderAbstract
 
             $field_string .= ')';
 
-            $url .= '&fields='.$field_string;
+            $url .= '&context='.$field_string;
         }
 
         if($page) {
-            $url .= '&pageToken='.$page;
+            $url .= '&page='.$page;
         }
 
         $postResponse = $this->makeRequest($url);
@@ -60,30 +61,27 @@ class WpApiV2 extends ReaderAbstract
         return $postResponse;
     }
 
-    public function next(){
-        if(!array_key_exists('nextPageToken', $this->page) || $this->page['nextPageToken'] == null) {
+     public function next(){
+        $this->cur_page++;
+        $this->posts();
+        if($this->page['code'] == 'rest_post_invalid_page_number'){
+            $this->cur_page--;
             return false;
-        } else {
-//            $post_url = $this->info->getPosts()->selfLink;
-//
-//            $url = $post_url.'?key='.$this->api_key.'&pageToken='.$this->page['nextPageToken'];
-//            $this->page = $this->makeRequest($url);
-            $this->posts(null, $this->page['nextPageToken']);
-
-            return true;
         }
+
+        return true;
     }
 
     public function current_page(){
-        return $this->page['nextPageToken'];
+        return $this->cur_page;
     }
 
     public function setKeyword($keyword){
         $this->keyword = $keyword;
 
-        $post_url = $this->info->getPosts()->selfLink;
+        $post_url = $this->url.'/wp-json/v2/posts';
 
-        $url = $post_url.'/search?key='.$this->api_key.'&q='.$this->keyword;
+        $url = $post_url."?search=$this->keyword";
         $this->page = $this->makeRequest($url);
 
         return $this->page;
@@ -94,18 +92,29 @@ class WpApiV2 extends ReaderAbstract
     }
 
     public function labels($limit = 100){
-        $labels = [];
+        $result = [];
 
-        foreach ($this->page['items'] as $item){
-            foreach ($item->labels as $label){
-                if (count($labels) == $limit) break;
+        $tag_url = $this->url."/wp-json/v2/tags/?per_page=$limit";
+        
+        $tags = $this->makeRequest($tag_url);
+        foreach ($tags['tags'] as $tag){
+            $result[] = $tag;
 
-                $labels[] = $label;
+            if(count($result) = $limit)  break;
+        }
+        if(count($result) < $limit){
+            $remain = $limit - $tags['found'];
+            $category_url = $this->url."/wp-json/v2/categories/?per_page=$remain";
+            $categories = $this->makeRequest($category_url);
+
+            foreach ($categories['categories'] as $category){
+                $result[] = $category;
             }
         }
 
-        return $labels;
+        return $result;
     }
+
 
     protected function makeRequest($url){
         $response = $this->client->request('GET', $url);
@@ -116,7 +125,7 @@ class WpApiV2 extends ReaderAbstract
     }
 
     protected function makeGetInfoUrl(){
-        return self::BASE_URL.$this->url.'&key='.$this->api_key;
+        return $this->url.'/wp-json';
     }
 
     protected function setInfoData($arrayResponse){
